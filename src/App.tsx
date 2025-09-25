@@ -8,10 +8,12 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DatasetUpload from "./components/DatasetUpload";
 import AnalysisOptions from "./components/AnalysisOptions";
-import Visualize from "./components/Visualize";
-import ResultPage from "./components/Result";
+import SamplesPage from "./components/Samples";
 import MapPage from "./components/Map";
 import ExportPage from "./components/Export";
+
+// ✅ import your context provider
+import { DatasetProvider } from "./context/DataContext";
 
 const queryClient = new QueryClient();
 
@@ -20,24 +22,26 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/upload" element={<DatasetUpload />} />
+      {/* ✅ wrap with DatasetProvider */}
+      <DatasetProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/upload" element={<DatasetUpload />} />
 
-          {/* Nested routes for Analysis */}
-          <Route path="/analysis" element={<AnalysisOptions />}>
-            <Route index element={<Visualize />} /> {/* default when /analysis */}
-            <Route path="visualize" element={<Visualize />} />
-            <Route path="result" element={<ResultPage />} />
-            <Route path="map" element={<MapPage />} />
-            <Route path="export" element={<ExportPage />} />
-          </Route>
+            {/* Nested routes for Analysis */}
+            <Route path="/analysis" element={<AnalysisOptions />}>
+              <Route index element={<Navigate to="samples" replace />} />
+              <Route path="samples" element={<SamplesPage />} />
+              <Route path="map" element={<MapPage />} />
+              <Route path="export" element={<ExportPage />} />
+            </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </DatasetProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

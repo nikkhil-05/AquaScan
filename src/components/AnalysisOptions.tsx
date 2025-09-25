@@ -8,8 +8,8 @@ const AnalysisOptions = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const tabs = ["Samples", "map", "export"] as const;
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Samples");
+  const tabs = ["samples", "map", "export"] as const; // lowercase for routes
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("samples");
 
   // Set active tab based on URL
   useEffect(() => {
@@ -17,19 +17,14 @@ const AnalysisOptions = () => {
     if (tabs.includes(path as any)) {
       setActiveTab(path as any);
     } else {
-      // Default to "visualize" if URL doesn't match
-      navigate("/analysis/visualize", { replace: true });
+      // Default to "samples" if URL doesn't match
+      navigate("/analysis/samples", { replace: true });
     }
   }, [location.pathname, navigate]);
 
   const handleTabClick = (tab: typeof tabs[number]) => {
-    if (tab === "map") {
-      // Open Google in a new tab
-      window.open("https://www.google.com", "_blank");
-    } else {
-      setActiveTab(tab);
-      navigate(`/analysis/${tab}`);
-    }
+    setActiveTab(tab);
+    navigate(`/analysis/${tab}`);
   };
 
   return (
@@ -52,14 +47,14 @@ const AnalysisOptions = () => {
               {tabs.map((tab) => (
                 <Button
                   key={tab}
-                  className={`${
+                  className={`capitalize ${
                     activeTab === tab
                       ? "bg-water-primary text-white"
                       : "bg-muted/20 text-foreground"
                   }`}
                   onClick={() => handleTabClick(tab)}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab}
                 </Button>
               ))}
             </div>
