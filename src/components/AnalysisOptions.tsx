@@ -8,8 +8,8 @@ const AnalysisOptions = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const tabs = ["visualize", "result", "map", "export"] as const;
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("visualize");
+  const tabs = ["Samples", "map", "export"] as const;
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Samples");
 
   // Set active tab based on URL
   useEffect(() => {
@@ -23,8 +23,13 @@ const AnalysisOptions = () => {
   }, [location.pathname, navigate]);
 
   const handleTabClick = (tab: typeof tabs[number]) => {
-    setActiveTab(tab);
-    navigate(`/analysis/${tab}`);
+    if (tab === "map") {
+      // Open Google in a new tab
+      window.open("https://www.google.com", "_blank");
+    } else {
+      setActiveTab(tab);
+      navigate(`/analysis/${tab}`);
+    }
   };
 
   return (
@@ -32,7 +37,6 @@ const AnalysisOptions = () => {
       <WaterBackground />
 
       <div className="relative z-10 container mx-auto px-6 py-12">
-        {/* 🔹 Header always visible */}
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
             Analysis Ready
@@ -44,7 +48,6 @@ const AnalysisOptions = () => {
 
         <Card className="p-8 bg-card/40 backdrop-blur-water border-border/30 shadow-water">
           <CardContent className="space-y-6">
-            {/* 🔹 Tabs always visible */}
             <div className="flex justify-center gap-4 flex-wrap">
               {tabs.map((tab) => (
                 <Button
@@ -61,7 +64,7 @@ const AnalysisOptions = () => {
               ))}
             </div>
 
-            {/* 🔹 Page content below tabs */}
+            {/* Page content below tabs */}
             <div className="mt-6">
               <Outlet />
             </div>
