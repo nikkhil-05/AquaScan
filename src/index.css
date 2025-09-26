@@ -205,3 +205,29 @@
   0% { transform: scale(0.8); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
 }
+
+
+
+.maplibregl-popup-content {
+  background: none;  /* dark background */
+  color: white !important;      /* text color */
+  font-size: 14px !important;   /* custom font size */
+  border-radius: 8px !important; /* rounded corners */
+  padding: 0px; 
+}
+
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+    align-self: center;
+    border-bottom-color: none;
+    border-top: none;
+}
+
+.maplibregl-popup-close-button {
+    display: none;
+}
+
+.p-4{
+  background-color: hsl(215 25% 27%);
+  border-radius: 5%;
+  border: 0px;
+}

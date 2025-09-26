@@ -1103,8 +1103,8 @@ const allData: SampleData[] = [
       },
       "geometry": {
         "coordinates": [
-          77.0155,
-          28.4429
+          77.027187,
+          28.497399
         ],
         "type": "Point"
       },
@@ -1375,18 +1375,12 @@ const MapVisualization: React.FC = () => {
 
         // Pulse circle
         map.addSource('pulse-circle', {
-  type: 'geojson',
-  data: {
-    type: 'FeatureCollection',
-    features: [
-      { 
-        type: 'Feature', 
-        geometry: sample.geometry, 
-        properties: {}  // <--- add this
-      }
-    ]
-  }
-});
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [{ type: 'Feature', geometry: sample.geometry }]
+          }
+        });
 
         map.addLayer({
           id: 'pulse-circle',
