@@ -12,8 +12,10 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler, // ✅ Register Filler plugin
 } from "chart.js";
 
+// Register all Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -24,7 +26,8 @@ ChartJS.register(
   RadialLinearScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler // ✅ Needed for `fill: true` in Line chart
 );
 
 interface VisualizeProps {
@@ -32,65 +35,101 @@ interface VisualizeProps {
     metals: string[];
     currentLevels: number[];
     whoLimits: number[];
+    hmpi?: number;
   };
 }
 
 const Visualize: React.FC<VisualizeProps> = ({ dataset }) => {
-  const metals = dataset?.metals || ["Lead", "Cadmium", "Mercury", "Arsenic", "Chromium", "Copper"];
-  const currentLevels = dataset?.currentLevels || [0.08, 0.03, 0.06, 0.04, 0.07, 0.05];
-  const whoLimits = dataset?.whoLimits || [0.05, 0.025, 0.05, 0.01, 0.05, 0.05];
+  if (!dataset) return null;
+
+  const { metals, currentLevels, whoLimits, hmpi } = dataset;
+
+  // Colors for bar chart
+  const barColors = currentLevels.map((val, i) =>
+    val > whoLimits[i] ? "rgba(220,38,38,0.7)" : "rgba(34,197,94,0.7)"
+  );
 
   // Bar Chart
   const barData = {
     labels: metals,
     datasets: [
-      { label: "Current Level (mg/L)", data: currentLevels, backgroundColor: "rgba(59,130,246,0.7)" },
-      { label: "WHO Safe Limit (mg/L)", data: whoLimits, backgroundColor: "rgba(34,197,94,0.7)" },
+      { label: "Current Level (mg/L)", data: currentLevels, backgroundColor: barColors },
+      { label: "WHO Safe Limit (mg/L)", data: whoLimits, backgroundColor: "rgba(59,130,246,0.7)" },
     ],
   };
 
-  const barOptions = { responsive: true, plugins: { legend: { position: "top" as const }, title: { display: true, text: "Heavy Metal Concentrations" } } };
+  const barOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" as const },
+      title: { display: true, text: "Heavy Metal Concentrations" },
+    },
+  };
 
   // Line Chart
   const lineData = {
     labels: metals,
     datasets: [
-      { label: "Current Levels", data: currentLevels, borderColor: "rgba(59,130,246,0.8)", backgroundColor: "rgba(59,130,246,0.3)", fill: true },
-      { label: "WHO Limits", data: whoLimits, borderColor: "rgba(34,197,94,0.8)", backgroundColor: "rgba(34,197,94,0.3)", fill: true },
+      {
+        label: "Current Levels",
+        data: currentLevels,
+        borderColor: "rgba(220,38,38,0.8)",
+        backgroundColor: "rgba(220,38,38,0.2)",
+        fill: true, // ✅ Filler plugin needed
+      },
+      {
+        label: "WHO Limits",
+        data: whoLimits,
+        borderColor: "rgba(34,197,94,0.8)",
+        backgroundColor: "rgba(34,197,94,0.2)",
+        fill: true,
+      },
     ],
   };
 
-  const lineOptions = { responsive: true, plugins: { legend: { position: "top" as const }, title: { display: true, text: "Trend Comparison" } } };
-
-  // Pie Chart (small)
-  const pieData = {
-    labels: metals,
-    datasets: [{ data: currentLevels, backgroundColor: ["#3b82f6","#22c55e","#f97316","#eab308","#8b5cf6","#f43f5e"] }],
+  const lineOptions = {
+    responsive: true,
+    plugins: { legend: { position: "top" as const }, title: { display: true, text: "Trend Comparison" } },
   };
 
-  const pieOptions = { responsive: true, plugins: { title: { display: true, text: "Proportion of Each Metal" } } };
+  // Pie Chart
+  const pieData = {
+    labels: metals,
+    datasets: [
+      {
+        data: currentLevels,
+        backgroundColor: metals.map((_, i) => (currentLevels[i] > whoLimits[i] ? "#dc2626" : "#22c55e")),
+      },
+    ],
+  };
+
+  const pieOptions = { responsive: true, plugins: { title: { display: true, text: "Proportion of Metals" } } };
 
   // Radar Chart
   const radarData = {
     labels: metals,
     datasets: [
-      { label: "Current Levels", data: currentLevels, backgroundColor: "rgba(59,130,246,0.2)", borderColor: "rgba(59,130,246,0.7)" },
-      { label: "WHO Limits", data: whoLimits, backgroundColor: "rgba(34,197,94,0.2)", borderColor: "rgba(34,197,94,0.7)" },
+      { label: "Current Levels", data: currentLevels, backgroundColor: "rgba(220,38,38,0.2)", borderColor: "rgba(220,38,38,0.8)" },
+      { label: "WHO Limits", data: whoLimits, backgroundColor: "rgba(34,197,94,0.2)", borderColor: "rgba(34,197,94,0.8)" },
     ],
   };
 
   const radarOptions = { responsive: true, plugins: { title: { display: true, text: "Radar Comparison" } } };
 
-  // Heatmap: intensity proportional to metal concentration
+  // Heatmap: color intensity based on level
   const maxLevel = Math.max(...currentLevels, ...whoLimits);
   const getHeatColor = (value: number) => {
     const intensity = Math.min(1, value / maxLevel);
-    const red = Math.floor(255 * intensity);
-    return `rgb(${red}, 100, 150)`; // shades of red/pink
+    const red = Math.floor(220 * intensity);
+    return `rgb(${red}, 100, 150)`;
   };
 
   return (
     <div className="space-y-12">
+      {hmpi !== undefined && (
+        <div className="text-xl font-bold text-foreground mb-4">HMPI: {hmpi.toFixed(2)}</div>
+      )}
+
       <div>
         <h3 className="text-lg font-semibold mb-4">Bar Chart: Heavy Metal Concentrations</h3>
         <Bar data={barData} options={barOptions} />
@@ -119,7 +158,12 @@ const Visualize: React.FC<VisualizeProps> = ({ dataset }) => {
           {metals.map((metal, idx) => (
             <div
               key={metal}
-              style={{ backgroundColor: getHeatColor(currentLevels[idx]), padding: "1rem", borderRadius: "0.5rem", color: "#fff" }}
+              style={{
+                backgroundColor: getHeatColor(currentLevels[idx]),
+                padding: "1rem",
+                borderRadius: "0.5rem",
+                color: "#fff",
+              }}
             >
               <strong>{metal}</strong>
               <div>{currentLevels[idx]} mg/L</div>

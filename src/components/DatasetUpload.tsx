@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from 'lucide-react';
-import Papa from 'papaparse';
+import axios from 'axios';
 import { useDataset } from '@/context/DataContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,7 +23,7 @@ const DatasetUpload = () => {
     if (file) handleFile(file);
   };
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     const allowedTypes = ['.csv', '.xlsx', '.xls'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
 
@@ -40,25 +40,27 @@ const DatasetUpload = () => {
     setUploadedFile(file);
     setIsProcessing(true);
 
-    if (fileExtension === '.csv') {
-      Papa.parse(file, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: (result) => {
-          setIsProcessing(false);
-          setData(result.data);
-          toast({ title: "Upload Successful", description: `${file.name} processed successfully!` });
-        },
-        error: (error) => {
-          setIsProcessing(false);
-          console.error("CSV parsing error:", error);
-          toast({ title: "File Error", description: `Failed to parse ${file.name}`, variant: "destructive" });
-        }
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      console.log('Uploading file to backend:', file.name);
+
+      const response = await axios.post('http://127.0.0.1:5000/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-    } else {
+
+      console.log('Backend response:', response.data);
+
+      setData(response.data.GeoJSON); // Store in DataContext
+      toast({ title: "Upload Successful", description: `${file.name} processed successfully!` });
+
+    } catch (error: any) {
+      console.error('Upload error:', error.response?.data || error.message);
+      toast({ title: "Upload Failed", description: "Failed to upload file", variant: "destructive" });
+      setUploadedFile(null);
+    } finally {
       setIsProcessing(false);
-      toast({ title: "Excel Support", description: "Excel parsing not implemented. Please use a CSV file.", variant: "destructive" });
     }
   };
 
