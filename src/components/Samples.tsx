@@ -24,15 +24,27 @@ const Samples = () => {
 
   // WHO limits
   const whoLimits: Record<string, number> = {
-    Pb: 0.05,
-    Cd: 0.003,
-    As: 0.01,
-    Hg: 0.006,
-    Cr: 0.05,
-    Cu: 2,
-    Zn: 3,
-    Ni: 0.02,
+    Lead: 0.05,
+    Cadmium: 0.003,
+    Arsenic: 0.01,
+    Mercury: 0.006,
+    Chromium: 0.05,
+    Copper: 2,
+    Zinc: 3,
+    Nickel: 0.02,
   };
+
+//   function getColor(metal: string, value: number) {
+//   const limit = whoLimits[metal];
+
+//   if (value > limit) {
+//     return "text-red-500 font-semibold bg-red-500/10";   // 🚨 above limit
+//   } else if (value > 0.7 * limit) {
+//     return "text-yellow-500 font-semibold bg-yellow-500/10"; // ⚠️ near limit
+//   } else {
+//     return "text-green-500";  // ✅ safe
+//   }
+// }
 
   const handleRowClick = (index: number) => {
     setExpandedRowIndex(expandedRowIndex === index ? null : index);
@@ -58,7 +70,13 @@ const Samples = () => {
       <h2 className="text-2xl font-bold mb-4 text-foreground">Dataset Samples</h2>
 
       {/* Table Header */}
-      <div className="flex-shrink-0 border border-border rounded-t-lg bg-card overflow-x-auto">
+      <div
+  className="flex-shrink-0 border border-border rounded-t-lg overflow-x-auto"
+  style={{
+    background: "linear-gradient(90deg, rgba(5,78,107,1) 0%, rgba(32,119,186,1) 51%, rgba(83,157,237,1) 100%)"
+  }}
+>
+
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
@@ -98,18 +116,29 @@ const Samples = () => {
                     <td className="px-4 py-3">{row.Sample_ID}</td>
                     <td className="px-4 py-3">{lat}</td>
                     <td className="px-4 py-3">{lng}</td>
-                    {metals.map(m => (
+                    {metals.map(m => {
+
+                    //   console.log("Metals in row:", Object.keys(row.all_metal_conc));
+                    //   console.log("WHO Limits:", Object.keys(whoLimits));
+
+                    // console.log(`Metal: ${m}`, 'Value:', row.all_metal_conc[m], 'Limit:', whoLimits[m]);
+
+                    return (
                       <td
                         key={m}
                         className={`px-4 py-3 font-mono ${
                           row.all_metal_conc[m] > whoLimits[m]
-                            ? 'text-destructive font-semibold bg-destructive/10'
-                            : 'text-green-400'
+                            ? 'text-red-500 font-semibold bg-red-500/10'
+                            : (row.all_metal_conc[m] > 0.6 * whoLimits[m]) && (row.all_metal_conc[m] <= whoLimits[m])
+                              ? "text-yellow-500 font-semibold bg-yellow-500/10"
+                              : "text-green-500"
                         }`}
                       >
                         {row.all_metal_conc[m] || 0}
                       </td>
-                    ))}
+                    );
+                  })}
+
                   </tr>
 
                   {expandedRowIndex === index && (

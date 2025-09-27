@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file,Response
 from flask_cors import CORS
 import pandas as pd
 import numpy as np
@@ -7,7 +7,12 @@ from datetime import datetime
 from pymongo import MongoClient
 import uuid
 import re
+import base64
 from bson import ObjectId
+# from pdf_export import generate_pdf_report
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
 
 app = Flask(__name__)
 CORS(app)
@@ -47,7 +52,6 @@ def merge_metal_columns(df, metal_cols):
     merged_df = df.copy()
     merged_cols = {}
     for metal, cols in metal_cols.items():
-        # Skip metals with no columns detected
         if not cols:
             continue
         
@@ -55,7 +59,7 @@ def merge_metal_columns(df, metal_cols):
             merged_df[metal] = merged_df[cols].sum(axis=1)
         else:
             merged_df[metal] = merged_df[cols[0]]
-        merged_cols[metal] = metal  # only metals present in df
+        merged_cols[metal] = metal 
     return merged_df, merged_cols
 
 
@@ -104,7 +108,7 @@ def compute_hmpi_vectorized(df, metal_cols):
     """
     df_hmpi = df.copy()
 
-    # Only consider metals present in DataFrame and STANDARD_LIMITS
+    
     valid_metals = {metal: col for metal, col in metal_cols.items() if metal in STANDARD_LIMITS and col in df_hmpi.columns}
 
     if not valid_metals:
@@ -131,7 +135,7 @@ def compute_hmpi_vectorized(df, metal_cols):
     # HMPI = sum of weighted indices (metals detected in dataset)
     si_columns = [f"{metal}_SIi" for metal in valid_metals]
     df_hmpi["HMPI"] = df_hmpi[si_columns].sum(axis=1)
-
+    df_hmpi = df_hmpi.round(4)
     return df_hmpi
 
 def load_file(file):
@@ -185,13 +189,20 @@ def upload_file():
         valid_metals_for_geo = [m for m in merged_cols if m in df_hmpi.columns]
 
         # Build GeoJSON features
+        sample_counter = 1  
         features = []
         for _, row in df_hmpi.iterrows():
             metal_conc = {m: row[m] for m in valid_metals_for_geo if pd.notna(row[m])}
             latlon_flag = pd.notna(row.get("Latitude")) and pd.notna(row.get("Longitude"))
 
+            # If no Sample_ID present in row, assign sequential ID like S1, S2...
+            sample_id = row.get("Sample_ID")
+            if pd.isna(sample_id) or sample_id == "":
+                sample_id = f"S{sample_counter}"
+                sample_counter += 1
+
             features.append({
-                "Sample_ID": row.get("Sample_ID", str(uuid.uuid4())),
+                "Sample_ID": sample_id,
                 "no_of_metals": len(metal_conc),
                 "all_metal_conc": metal_conc,
                 "geometry": {
@@ -201,7 +212,6 @@ def upload_file():
                 "latitudeandlongitudepresent": latlon_flag,
                 "HMPI": row.get("HMPI", None)
             })
-
         # Insert into uploads collection
         upload_doc = {
             "file_name": file.filename,
@@ -291,7 +301,8 @@ def process_file():
                     "coordinates": [row.get("Longitude"), row.get("Latitude")]
                 },
                 "latitudeandlongitudepresent": latlon_flag,
-                "HMPI": row.get("HMPI", None)
+               "HMPI": round(row.get("HMPI", 0), 4) if pd.notna(row.get("HMPI")) else None
+
             })
 
         # Save to samples collection
@@ -332,6 +343,80 @@ def download_file(file_id):
         download_name='processed.csv',
         as_attachment=True
     )
+@app.route("/export-pdf", methods=["POST"])
+def export_pdf():
+    data = request.json
+    file_ids = data.get("file_ids", [])
+    if not file_ids:
+        return jsonify({"error": "No file_ids provided"}), 400
+
+
+    docs = list(samples_collection.find({"_id": {"$in": file_ids}}))
+    if not docs:
+        return jsonify({"error": "No samples found"}), 404
+
+    # pdf_buffer = generate_pdf_report(docs)
+
+    return send_file(
+        pdf_buffer,
+        as_attachment=True,
+        download_name="multi_sample_report.pdf",
+        mimetype="application/pdf"
+    )
+
+@app.route("/hmpi-charts-csv", methods=["POST"])
+def hmpi_charts_csv():
+    try:
+        data = request.json
+        geojson_data = data.get("GeoJSON") or data.get("file_data")
+        if not geojson_data:
+            return jsonify({"error": "GeoJSON not provided"}), 400
+
+        rows = []
+        for sample in geojson_data:
+            sample_id = sample.get("Sample_ID", "Unknown")
+            conc = sample.get("all_metal_conc", {})
+            limits = {metal: STANDARD_LIMITS.get(metal, 0) for metal in conc.keys()}
+
+            row = {"Sample_ID": sample_id}
+
+            # Bar/Radar chart data (rounding to 4 decimals)
+            for metal, value in conc.items():
+                row[f"{metal}_Actual"] = round(float(value), 4) if value is not None else None
+                row[f"{metal}_Limit"] = round(float(limits.get(metal, 0)), 4)
+
+            # Pie chart data (just actuals, rounded)
+            row["Pie_Values"] = ",".join([f"{float(v):.4f}" for v in conc.values() if v is not None])
+
+            # Heatmap (round correlations too)
+            if len(conc) > 1:
+                df = pd.DataFrame([conc])
+                corr = df.corr().round(4)  # round correlations to 4 decimals
+                row["Heatmap"] = corr.to_csv(index=True, float_format="%.4f")
+            else:
+                row["Heatmap"] = "1.0000"
+
+            rows.append(row)
+
+        # Convert all rows to DataFrame
+        csv_df = pd.DataFrame(rows)
+
+        # Write CSV with 4 decimal places
+        csv_buffer = io.StringIO()
+        csv_df.to_csv(csv_buffer, index=False, float_format="%.4f")
+
+        return Response(
+            csv_buffer.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=hmpi_charts.csv"}
+        )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

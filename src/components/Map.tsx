@@ -47,7 +47,7 @@ const allData: SampleData[] = [
       },
       "geometry": {
         "coordinates": [
-          81.0266,
+          77.0266,
           28.4595
         ],
         "type": "Point"
@@ -1307,8 +1307,8 @@ const MapVisualization: React.FC = () => {
 
       const popupHtml = `
         <div style="font-family: sans-serif; font-size: 13px; max-width: 280px; background: ${getColor(sample.HMPI)}; color: white; border-radius: 8px; padding: 16px; box-shadow: 0 10px 25px -3px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-            <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${getColor(sample.HMPI)};"></div>
+          <div style="display: flex; align-items: center; justify-content:center; text-decoration: underline; gap: 8px; margin-bottom: 12px;">
+           
             <strong style="font-size: 18px;">${sample.Sample_ID}</strong>
           </div>
           <div style="margin-bottom: 12px;">
@@ -1396,7 +1396,7 @@ const MapVisualization: React.FC = () => {
         // Animate pulse
         let start: number | null = null;
         const animatePulse = (timestamp: number) => {
-          if (!map.getLayer('pulse-circle')) return;
+          if (!map || !map.getLayer('pulse-circle')) return;
           if (!start) start = timestamp;
           const progress = (timestamp - start) / 1000;
           const opacity = 0.3 + 0.2 * Math.sin(progress * 2 * Math.PI);
@@ -1464,22 +1464,22 @@ const MapVisualization: React.FC = () => {
 
       {/* Legend */}
       <Card className="absolute top-6 left-6 bg-map-panel/95 backdrop-blur-sm border-border/20 shadow-panel">
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3" style={{ backgroundColor: "hsl(215 25% 27%)", borderRadius: "0.65rem" }}>
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-map-panel-foreground" />
             <h3 className="font-semibold text-map-panel-foreground">HMPI Levels</h3>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-map-safe"></div>
+              <div className="w-4 h-4 rounded-full" style={{backgroundColor: "#22c55e"}}></div>
               <span className="text-map-panel-foreground">Safe (≤60)</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-map-moderate"></div>
+              <div className="w-4 h-4 rounded-full" style={{backgroundColor: "#eab308"}}></div>
               <span className="text-map-panel-foreground">Moderate (61-100)</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-map-danger"></div>
+              <div className="w-4 h-4 rounded-full" style={{backgroundColor: "#ef4444"}}></div>
               <span className="text-map-panel-foreground">High (&gt;100)</span>
             </div>
           </div>
@@ -1499,7 +1499,7 @@ const MapVisualization: React.FC = () => {
       {/* Sample Info Panel */}
       {selectedSample && (
         <Card className="absolute top-6 right-6 w-80 bg-map-panel/95 backdrop-blur-sm border-border/20 shadow-panel">
-          <div className="p-4">
+          <div className="p-4" style={{ backgroundColor: "hsl(215 25% 27%)" , borderRadius: "0.65rem" }}>
             <div className="flex items-center gap-2 mb-3">
               <div 
                 className="w-4 h-4 rounded-full" 
