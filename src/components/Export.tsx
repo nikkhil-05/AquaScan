@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, FileSpreadsheet, MapPinned, CircleCheckBig } from "lucide-react";
 
 const ExportPage = () => {
   // URLs for downloadable files
@@ -34,7 +34,7 @@ const ExportPage = () => {
               <li>Intra Sample Analysis</li>
             </ul>
             <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-              <Button className="mt-4 w-full">Download PDF Report</Button>
+              <Button className="mt-4 w-full">Download Detailed Report</Button>
             </a>
           </CardContent>
         </Card>
@@ -43,7 +43,7 @@ const ExportPage = () => {
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" /> PDF Short Summary
+              <CircleCheckBig className="w-5 h-5" /> PDF Short Summary
             </CardTitle>
             <CardDescription>Complete analysis report with charts and maps</CardDescription>
           </CardHeader>
@@ -56,7 +56,7 @@ const ExportPage = () => {
               <li>Inter Sample Analysis</li>
             </ul>
             <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-              <Button className="mt-4 w-full">Download PDF Report</Button>
+              <Button className="mt-4 w-full">Download Overview Report</Button>
             </a>
           </CardContent>
         </Card>
@@ -65,7 +65,7 @@ const ExportPage = () => {
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" /> Download Your Map
+              <MapPinned className="w-5 h-5" /> Download Your Map
             </CardTitle>
             <CardDescription>Complete analysis report with charts and maps</CardDescription>
           </CardHeader>
@@ -78,7 +78,7 @@ const ExportPage = () => {
               <li>Geographic Overview</li>
             </ul>
             <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-              <Button className="mt-4 w-full">Download PDF Report</Button>
+              <Button className="mt-4 w-full">Download Offline Map</Button>
             </a>
           </CardContent>
         </Card>
