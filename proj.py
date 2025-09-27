@@ -358,7 +358,6 @@ def export_pdf():
     # pdf_buffer = generate_pdf_report(docs)
 
     return send_file(
-        pdf_buffer,
         as_attachment=True,
         download_name="multi_sample_report.pdf",
         mimetype="application/pdf"
